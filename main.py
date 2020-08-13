@@ -1,4 +1,3 @@
-from PyQt5.QtWidgets import QWidget
 from wx import *
 from wx.media import MediaCtrl, MEDIABACKEND_WMP10, EVT_MEDIA_LOADED, EVT_MEDIA_STATECHANGED, MEDIASTATE_PLAYING,\
     MEDIASTATE_PAUSED, MEDIASTATE_STOPPED
