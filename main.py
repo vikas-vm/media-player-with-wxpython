@@ -23,9 +23,44 @@ def hhmmss(ms):
         return "%02d:%02d" % (minute, sec)
 
 
-# Customized Slider
+# custom video Widget
+class CustomMediaCtrl(MediaCtrl):
+
+    def __init__(self, parent, key, backend):
+        MediaCtrl.__init__(self, parent, key, szBackend=backend)
+
+        self.Bind(EVT_CHAR, self.on_key)
+
+    def on_key(self, event):
+        key = event.GetKeyCode()
+        print(key)
+        if key == 15:
+            my_app.open_files_main()
+        elif key == 32:
+            my_app.play_media()
+        elif key == 98:
+            my_app.seek(5000)
+        elif key == 118:
+            my_app.seek(-5000)
+        elif key == 2:
+            my_app.seek(60000)
+        elif key == 22:
+            my_app.seek(-60000)
+        elif key == 102:
+            my_app.switch_fullscreen()
+        elif key == 110:
+            my_app.playlist.next()
+        elif key == 112:
+            my_app.playlist.prev()
+        elif key == 109:
+            my_app.switch_maximize()
+        event.Skip()
+
+    def set_focus(self):
+        self.SetFocus()
 
 
+# custom Slider
 class VideoSlider(Slider):
     def __init__(self, *args, **kwargs):
         Slider.__init__(self, *args, **kwargs, style=SL_BOTH | SL_SELRANGE)
@@ -98,7 +133,7 @@ class Application(Frame):
         self.timer.Start(1000)
 
         # Player
-        self.mediaPlayer = MediaCtrl(self.panel, 1, szBackend=MEDIABACKEND_WMP10)
+        self.mediaPlayer = CustomMediaCtrl(self.panel, 1, MEDIABACKEND_WMP10)
 
         # PlayLists
         self.playlist = PlaylistModel()
@@ -119,7 +154,7 @@ class Application(Frame):
         self.next_btn = BitmapButton(self.panel, -1, Bitmap("bitmaps/next.png"), style=BORDER_NONE)
 
         # Speaker Icon
-        speaker_label = StaticBitmap(self.panel, -1, Bitmap("bitmaps/speaker-volume.png"))
+        self.speaker_label = StaticBitmap(self.panel, -1, Bitmap("bitmaps/speaker-volume.png"))
 
         # Optional label(Just for set align purpose)
         self.pseudo_label = StaticText(self.panel, label='')
@@ -140,7 +175,7 @@ class Application(Frame):
 
         # Layout for volumes widgets
         volume_box = BoxSizer(HORIZONTAL)
-        volume_box.Add(speaker_label)
+        volume_box.Add(self.speaker_label, 0, TOP, 5)
         volume_box.Add(self.volumeSlider)
 
         # Layout for open_btn, play_btn and for layouts(prev_stop_next_box, volume_box)
@@ -171,8 +206,6 @@ class Application(Frame):
 
         # SetSizer Main BoxSizer in Panel
         self.panel.SetSizer(main_box)
-
-        self.Bind(EVT_KEY_UP, self.on_key_down)
 
         # Bind Buttons with functions
         self.open_btn.Bind(EVT_BUTTON, self.open_files)
@@ -268,10 +301,16 @@ class Application(Frame):
         media_length = player.Length()
         seek_val = int((media_length/max_pos) * clicked_pos)
         player.Seek(seek_val)
-        print(seek_val)
+        player.Play()
+
+    def seek(self, val):
+        player = self.mediaPlayer
+        player.Seek(val, FromCurrent)
+        player.Play()
 
     def update_position(self, e):
         player = self.mediaPlayer
+        player.set_focus()
         offset = player.Tell()
         self.videoSlider.SetValue(offset)
         if offset == 0:
@@ -290,6 +329,40 @@ class Application(Frame):
             self.mediaPlayer.SetVolume(val1 / 20)
             vol.SetValue(val1)
 
+    def switch_maximize(self):
+        if self.IsMaximized():
+            self.Maximize(False)
+        else:
+            self.Maximize(True)
+
+    def switch_fullscreen(self):
+        if self.IsFullScreen():
+            self.currentTimeLabel.Show()
+            self.videoSlider.Show()
+            self.totalTimeLabel.Show()
+            self.open_btn.Show()
+            self.play_btn.Show()
+            self.prev_btn.Show()
+            self.stop_btn.Show()
+            self.next_btn.Show()
+            self.pseudo_label.Show()
+            self.speaker_label.Show()
+            self.volumeSlider.Show()
+            self.ShowFullScreen(False)
+        else:
+            self.currentTimeLabel.Hide()
+            self.videoSlider.Hide()
+            self.totalTimeLabel.Hide()
+            self.open_btn.Hide()
+            self.play_btn.Hide()
+            self.prev_btn.Hide()
+            self.stop_btn.Hide()
+            self.next_btn.Hide()
+            self.pseudo_label.Hide()
+            self.speaker_label.Hide()
+            self.volumeSlider.Hide()
+            self.ShowFullScreen(True)
+
     def volume_down(self, event):
         vol = self.volumeSlider
         if vol.GetValue() > 0:
@@ -304,14 +377,6 @@ class Application(Frame):
             self.mediaPlayer.SetVolume(val1 / 20)
         else:
             self.mediaPlayer.SetVolume(1.0)
-
-    # def on_key_down(self, event=None):
-    #     key_code = event.GetKeyCode()
-    #     print(WXK_CONTROL_F)
-    #     print(key_code)
-    #     if key_code == WXK_MEDIA_PLAY_PAUSE:
-    #         self.play_media()
-    #     event.Skip()
 
 
 app = App()
