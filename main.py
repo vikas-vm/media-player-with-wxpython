@@ -22,38 +22,38 @@ def hhmmss(ms):
         return "%02d:%02d" % (minute, sec)
 
 
-# custom video Widget
+def on_key(event):
+    key = event.GetKeyCode()
+    if key == 15:
+        my_app.open_files_main()
+    elif key == 32:
+        my_app.play_media()
+    elif key == 98:
+        my_app.seek(5000)
+    elif key == 118:
+        my_app.seek(-5000)
+    elif key == 2:
+        my_app.seek(60000)
+    elif key == 22:
+        my_app.seek(-60000)
+    elif key == 102:
+        my_app.switch_fullscreen()
+    elif key == 110:
+        my_app.playlist.next()
+    elif key == 112:
+        my_app.playlist.prev()
+    elif key == 109:
+        my_app.switch_maximize()
+    event.Skip()
+
+
+# custom MediaCtrl Widget
 class CustomMediaCtrl(MediaCtrl):
 
     def __init__(self, parent, key, backend):
         MediaCtrl.__init__(self, parent, key, szBackend=backend)
 
-        self.Bind(EVT_CHAR, self.on_key)
-
-    def on_key(self, event):
-        key = event.GetKeyCode()
-        print(key)
-        if key == 15:
-            my_app.open_files_main()
-        elif key == 32:
-            my_app.play_media()
-        elif key == 98:
-            my_app.seek(5000)
-        elif key == 118:
-            my_app.seek(-5000)
-        elif key == 2:
-            my_app.seek(60000)
-        elif key == 22:
-            my_app.seek(-60000)
-        elif key == 102:
-            my_app.switch_fullscreen()
-        elif key == 110:
-            my_app.playlist.next()
-        elif key == 112:
-            my_app.playlist.prev()
-        elif key == 109:
-            my_app.switch_maximize()
-        event.Skip()
+        self.Bind(EVT_CHAR, on_key)
 
     def set_focus(self):
         self.SetFocus()
