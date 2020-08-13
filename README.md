@@ -12,7 +12,7 @@
     - key N for next Media
     - system play/pause, next and previous media buttons are enabled
     
-    # Due to I'm enabled to get event on arrow key, so some features like seeking which is suitable for arror key I bind it with key V and B
+    # Due to I was enabled to get event on arrow key, so some features like seeking which is suitable for arror key I had bind it with key V and B
     - key B for seeking 5 sec forward
     - ctrl + B for seeking 60 sec forward
     - key V for seeking 5 sec backward
