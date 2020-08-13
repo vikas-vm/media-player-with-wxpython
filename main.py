@@ -1,7 +1,13 @@
 from wx import *
-from wx.media import MediaCtrl, MEDIABACKEND_WMP10, EVT_MEDIA_LOADED, EVT_MEDIA_STATECHANGED, MEDIASTATE_PLAYING,\
+from wx.media import MediaCtrl, MEDIABACKEND_WMP10, EVT_MEDIA_LOADED, EVT_MEDIA_STATECHANGED, MEDIASTATE_PLAYING, \
     MEDIASTATE_PAUSED, MEDIASTATE_STOPPED
 import os
+
+
+class MyCallLater(CallLater):
+    def __del__(self):
+        print('MyCallLater.__del__ called!')
+
 
 h = 0
 
@@ -44,6 +50,12 @@ def on_key(event):
         my_app.playlist.prev()
     elif key == 109:
         my_app.switch_maximize()
+    elif key == WXK_MEDIA_PLAY_PAUSE:
+        my_app.play_media()
+    elif key == WXK_MEDIA_NEXT_TRACK:
+        my_app.playlist.next()
+    elif key == WXK_MEDIA_PREV_TRACK:
+        my_app.playlist.prev()
     event.Skip()
 
 
@@ -129,7 +141,7 @@ class Application(Frame):
 
         # timer
         self.timer = Timer(self, 1)
-        self.timer.Start(1000)
+        self.timer.Start(500)
 
         # Player
         self.mediaPlayer = CustomMediaCtrl(self.panel, 1, MEDIABACKEND_WMP10)
@@ -298,7 +310,7 @@ class Application(Frame):
     def set_seek(self, max_pos, clicked_pos):
         player = self.mediaPlayer
         media_length = player.Length()
-        seek_val = int((media_length/max_pos) * clicked_pos)
+        seek_val = int((media_length / max_pos) * clicked_pos)
         player.Seek(seek_val)
         player.Play()
 
@@ -311,6 +323,9 @@ class Application(Frame):
         player = self.mediaPlayer
         player.set_focus()
         offset = player.Tell()
+        length = player.Length()
+        if offset > (length - 700):
+            self.playlist.next()
         self.videoSlider.SetValue(offset)
         if offset == 0:
             self.stop_btn.Disable()
@@ -320,13 +335,6 @@ class Application(Frame):
 
     def video_slider_ctrl(self, e):
         self.mediaPlayer.Seek(self.videoSlider.GetValue())
-
-    def volume_up(self, event):
-        vol = self.volumeSlider
-        if vol.GetValue() < 20:
-            val1 = vol.GetValue() + 1
-            self.mediaPlayer.SetVolume(val1 / 20)
-            vol.SetValue(val1)
 
     def switch_maximize(self):
         if self.IsMaximized():
@@ -361,6 +369,13 @@ class Application(Frame):
             self.speaker_label.Hide()
             self.volumeSlider.Hide()
             self.ShowFullScreen(True)
+
+    def volume_up(self, event):
+        vol = self.volumeSlider
+        if vol.GetValue() < 20:
+            val1 = vol.GetValue() + 1
+            self.mediaPlayer.SetVolume(val1 / 20)
+            vol.SetValue(val1)
 
     def volume_down(self, event):
         vol = self.volumeSlider
