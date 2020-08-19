@@ -90,8 +90,15 @@ class PlaylistModel:
         self.current = 0
         self.playlist = []
 
-    def empty(self):
-        if len(self.playlist) == 0:
+    def get_len(self):
+        return len(self.playlist)
+
+    def set_current(self, val):
+        self.current = val
+        self.load_media()
+
+    def is_empty(self):
+        if self.get_len() == 0:
             return True
         else:
             return False
@@ -103,7 +110,7 @@ class PlaylistModel:
         return self.playlist[self.current]
 
     def check_next(self):
-        if self.current < len(self.playlist) - 1:
+        if self.current < self.get_len() - 1:
             return True
         else:
             return False
@@ -115,14 +122,14 @@ class PlaylistModel:
             return False
 
     def next(self):
-        if self.current < len(self.playlist) - 1:
-            self.current += 1
-            self.load_media()
+        current = self.current
+        if current < self.get_len() - 1:
+            self.set_current(current + 1)
 
     def prev(self):
-        if self.current > 0:
-            self.current -= 1
-            self.load_media()
+        current = self.current
+        if current > 0:
+            self.set_current(current - 1)
 
     def add_media(self, path):
         self.playlist.append(path)
@@ -175,7 +182,7 @@ class Application(Frame):
         # BoxSizer for current_time, video_slider and total_time
         video_slider_box = BoxSizer(HORIZONTAL)
         video_slider_box.Add(self.currentTimeLabel, 0, LEFT, 20)
-        video_slider_box.Add(self.videoSlider, 1, EXPAND)
+        video_slider_box.Add(self.videoSlider, 1, EXPAND | LEFT | RIGHT, 8)
         video_slider_box.Add(self.totalTimeLabel, 0, RIGHT, 20)
 
         # Layout for prev, stop and next button
@@ -257,12 +264,16 @@ class Application(Frame):
         self.ui_handler()
 
     def stop_media(self, event):
+        self.stop_media_main()
+
+    def stop_media_main(self):
         player = self.mediaPlayer
         state = player.GetState()
         if state != MEDIASTATE_STOPPED:
             player.Stop()
             my_app.SetLabel("Media Player")
             self.totalTimeLabel.SetLabel('00:00')
+            self.currentTimeLabel.SetLabel('00:00')
 
     def play(self, event):
         self.play_media()
@@ -291,7 +302,7 @@ class Application(Frame):
 
     def ui_handler(self):
         playlist = self.playlist
-        if playlist.empty():
+        if playlist.is_empty():
             self.play_btn.Disable()
             self.prev_btn.Disable()
             self.stop_btn.Disable()
@@ -324,14 +335,23 @@ class Application(Frame):
         player.set_focus()
         offset = player.Tell()
         length = player.Length()
-        if offset > (length - 700):
-            self.playlist.next()
+        if offset > (length - 700) & player.Length() > 0:
+            self.auto_next()
         self.videoSlider.SetValue(offset)
         if offset == 0:
             self.stop_btn.Disable()
         if offset > 0:
             self.stop_btn.Enable()
             self.currentTimeLabel.SetLabel(hhmmss(offset))
+
+    def auto_next(self):
+        playlist = self.playlist
+        if not playlist.is_empty():
+            if playlist.check_next():
+                playlist.next()
+            else:
+                playlist.set_current(0)
+                self.stop_media_main()
 
     def video_slider_ctrl(self, e):
         self.mediaPlayer.Seek(self.videoSlider.GetValue())
